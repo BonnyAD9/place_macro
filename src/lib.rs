@@ -382,16 +382,16 @@ impl Macro {
     fn from_name(s: &str) -> Option<Macro> {
         match s {
             "__ignore__" => Some(Self::Ignore),
-            "__identity__" => Some(Self::Identity),
-            "__dollar__" => Some(Self::Dollar),
-            "__string__" => Some(Self::String),
+            "__identity__" | "__id__" => Some(Self::Identity),
+            "__dollar__" | "__s__" => Some(Self::Dollar),
+            "__string__" | "__str__" => Some(Self::String),
             "__head__" => Some(Self::Head),
             "__tail__" => Some(Self::Tail),
             "__start__" => Some(Self::Start),
             "__last__" => Some(Self::Last),
             "__reverse__" => Some(Self::Reverse),
-            "__identifier__" => Some(Self::Identifier),
-            "__stringify__" => Some(Self::Stringify),
+            "__identifier__" | "__ident__" => Some(Self::Identifier),
+            "__stringify__" | "__strfy__" => Some(Self::Stringify),
             _ => None,
         }
     }

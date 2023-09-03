@@ -30,6 +30,13 @@ be expanded are used with a different sintax: instead of calling a macro as
 exception is the macro `dollar` that is called without the parenthesis:
 `__dollar__` instead of `dollar!()`.
 
+For some of the macros there are also shorter names:
+- `__identity__` - `__id__`
+- `__string__` - `__str__`
+- `__dollar__` - `__s__`
+- `__identifier__` - `__ident__`
+- `__stringify__` - `__strfy__`
+
 #### Example
 The following passes:
 ```rust
