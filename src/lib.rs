@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 
 ///!Macros you wish you had while you were writing your non-proc macro.
@@ -382,13 +384,13 @@ pub fn replace_newline(input: TokenStream) -> TokenStream {
         None => panic!("Expected two arguments, got 1"),
     };
 
-    let s = match litrs::StringLit::try_from(s) {
-        Ok(s) => s.into_value(),
-        Err(_) => panic!("First argument must be string literal"),
+    let s = match get_str_lit(s) {
+        Some(s) => s,
+        None => panic!("First argument must be string literal"),
     };
-    let r = match litrs::StringLit::try_from(r) {
-        Ok(r) => r.into_value(),
-        Err(_) => panic!("Second argument must be string literal"),
+    let r = match get_str_lit(r) {
+        Some(r) => r,
+        None => panic!("Second argument must be string literal"),
     };
 
     let mut res = String::new();
@@ -439,17 +441,17 @@ pub fn str_replace(input: TokenStream) -> TokenStream {
         None => panic!("Expected 3 arguments, got 2"),
     };
 
-    let s = match litrs::StringLit::try_from(s) {
-        Ok(s) => s.into_value(),
-        Err(_) => panic!("First argument must be string literal"),
+    let s = match get_str_lit(s) {
+        Some(s) => s,
+        None => panic!("First argument must be string literal"),
     };
-    let f = match litrs::StringLit::try_from(f) {
-        Ok(f) => f.into_value(),
-        Err(_) => panic!("Second argument must be string literal"),
+    let f = match get_str_lit(f) {
+        Some(f) => f,
+        None => panic!("Second argument must be string literal"),
     };
-    let t = match litrs::StringLit::try_from(t) {
-        Ok(t) => t.into_value(),
-        Err(_) => panic!("Third argument must be string literal"),
+    let t = match get_str_lit(t) {
+        Some(t) => t,
+        None => panic!("Second argument must be string literal"),
     };
 
     let res = s.replace(&f.to_string(), &t);
@@ -494,6 +496,23 @@ fn token_concat(input: TokenStream) -> String {
     }
 
     res
+}
+
+fn get_str_lit<'a>(tt: TokenTree) -> Option<Cow<'a, str>> {
+    match tt {
+        TokenTree::Group(g) => {
+            let mut i = g.stream().into_iter();
+            let t1 = i.next();
+            let t2 = i.next();
+            if t1.is_none() || t2.is_some() {
+                None
+            } else {
+                get_str_lit(t1.unwrap())
+            }
+        },
+        TokenTree::Literal(l) => litrs::StringLit::try_from(l).map(|l| l.into_value()).ok(),
+        _ => None,
+    }
 }
 
 /// Evaluates the macros in this crate in reverse order
