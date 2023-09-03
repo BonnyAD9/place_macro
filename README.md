@@ -125,3 +125,5 @@ my_cooler_macro! { cool };
 my_cool_macro! { foo -> &'static str, "cool!" }
 /// now you have the same function as in the previous example
 ```
+The last example was a little less readable, but you can see that you can do
+a lot with this macro.
