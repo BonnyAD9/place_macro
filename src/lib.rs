@@ -1,5 +1,4 @@
-use proc_macro::{TokenStream, TokenTree, Punct, Spacing, token_stream, Literal, Ident, Span};
-
+use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 
 /// Ignores all the input, as if there was nothing
 ///
@@ -53,7 +52,7 @@ pub fn dollar(input: TokenStream) -> TokenStream {
 /// ```
 /// use place_macro::string;
 ///
-/// let s = string!("hello" + , ", " {(agent)} ' ' 0x2F );
+/// let s = string!("hello" + , ", " {(agent)} ' ' 0x2F);
 /// assert_eq!(s, "hello, agent 47");
 /// ```
 #[proc_macro]
@@ -61,9 +60,7 @@ pub fn string(input: TokenStream) -> TokenStream {
     let res = token_concat(input);
 
     let mut r = TokenStream::new();
-    r.extend([
-        TokenTree::Literal(Literal::string(res.as_str()))
-    ].into_iter());
+    r.extend([TokenTree::Literal(Literal::string(res.as_str()))].into_iter());
     r
 }
 
@@ -214,6 +211,23 @@ pub fn identifier(input: TokenStream) -> TokenStream {
     r
 }
 
+/// Should be same to the rust macro stringify
+///
+/// # Example
+/// ```
+/// use place_macro;
+///
+/// let a = place_macro::stringify!("hello" + , ", " {(agent)} ' ' 0x2F);
+/// let b = stringify!("hello" + , ", " {(agent)} ' ' 0x2F);
+/// assert_eq!(a, b);
+/// ```
+#[proc_macro]
+pub fn stringify(input: TokenStream) -> TokenStream {
+    let mut res = TokenStream::new();
+    res.extend([TokenTree::Literal(Literal::string(&input.to_string()))]);
+    res
+}
+
 fn token_concat(input: TokenStream) -> String {
     let mut input = vec![input.into_iter()];
     let mut res = String::new();
@@ -223,26 +237,24 @@ fn token_concat(input: TokenStream) -> String {
             match t {
                 TokenTree::Group(g) => input.push(g.stream().into_iter()),
                 TokenTree::Ident(i) => res += &i.to_string(),
-                TokenTree::Punct(_) => {},
-                TokenTree::Literal(l) => {
-                    match litrs::Literal::from(l) {
-                        litrs::Literal::Bool(v) => res += &v.value().to_string(),
-                        litrs::Literal::Integer(v) => {
-                            if let Some(v) = v.value::<u128>() {
-                                res += &v.to_string()
-                            } else {
-                                panic!("Integer is too large");
-                            }
-                        },
-                        litrs::Literal::Float(v) => {
-                            let n: f64 = v.number_part().parse().unwrap();
-                            res += &n.to_string()
-                        },
-                        litrs::Literal::Char(v) => res.push(v.value()),
-                        litrs::Literal::String(v) => res += &v.into_value(),
-                        litrs::Literal::Byte(v) => res += &v.to_string(),
-                        litrs::Literal::ByteString(v) => res += &v.to_string(),
+                TokenTree::Punct(_) => {}
+                TokenTree::Literal(l) => match litrs::Literal::from(l) {
+                    litrs::Literal::Bool(v) => res += &v.value().to_string(),
+                    litrs::Literal::Integer(v) => {
+                        if let Some(v) = v.value::<u128>() {
+                            res += &v.to_string()
+                        } else {
+                            panic!("Integer is too large");
+                        }
                     }
+                    litrs::Literal::Float(v) => {
+                        let n: f64 = v.number_part().parse().unwrap();
+                        res += &n.to_string()
+                    }
+                    litrs::Literal::Char(v) => res.push(v.value()),
+                    litrs::Literal::String(v) => res += &v.into_value(),
+                    litrs::Literal::Byte(v) => res += &v.to_string(),
+                    litrs::Literal::ByteString(v) => res += &v.to_string(),
                 },
             }
         } else {
@@ -251,4 +263,152 @@ fn token_concat(input: TokenStream) -> String {
     }
 
     res
+}
+
+/// Evaluates the macros in this crate in reverse order
+///
+/// to minimize conflicts, the macros are refered to as `__macro__` where
+/// macro is the name of the macro. Special case is the macro `dollar` that
+/// doesn't have any arguments.
+/// # Examples
+/// ```
+/// use place_macro::place;
+///
+/// place! {
+///     pub fn __identifier__(my "_function")() -> bool {
+///         true
+///     }
+/// }
+/// assert!(my_function());
+///
+/// place! {
+///     macro_rules! mac {
+///         (__dollar__ var: literal) => {
+///             __dollar__ var
+///         }
+///     }
+/// }
+/// assert_eq!("hi", mac!("hi"));
+///
+/// let res = place!(__string__(1 __string__(2 __identity__(3 __string__(4)))));
+/// assert_eq!(res, "123__string__4");
+/// ```
+#[proc_macro]
+pub fn place(input: TokenStream) -> TokenStream {
+    let mut input: Vec<(_, Option<Macro>, _)> = vec![(input.into_iter(), None, Delimiter::None)];
+    let mut res = vec![TokenStream::new()];
+
+    while let Some((i, m, d)) = input.last_mut() {
+        let t = match (i.next(), m) {
+            (Some(t), _) => t,
+            (_, m) => {
+                if let Some(m) = m {
+                    let t = res.pop().expect("1");
+                    res.last_mut().expect("2").extend(m.invoke(t));
+                } else {
+                    if res.len() != 1 {
+                        let t = res.pop().expect("3");
+                        res.last_mut()
+                            .expect("4")
+                            .extend([TokenTree::Group(Group::new(*d, t))])
+                    }
+                }
+                input.pop();
+                continue;
+            }
+        };
+
+        let id = match t {
+            TokenTree::Group(g) => {
+                input.push((g.stream().into_iter(), None, g.delimiter()));
+                res.push(TokenStream::new());
+                continue;
+            }
+            TokenTree::Ident(id) => id,
+            t => {
+                res.last_mut().expect("5").extend([t]);
+                continue;
+            }
+        };
+
+        let name = id.to_string();
+        let m = match Macro::from_name(&name) {
+            None => {
+                res.last_mut().expect("6").extend([TokenTree::Ident(id)]);
+                continue;
+            }
+            Some(Macro::Dollar) => {
+                res.last_mut()
+                    .expect("7")
+                    .extend(dollar(TokenStream::new()));
+                continue;
+            }
+            Some(m) => m,
+        };
+
+        let g = if let Some(TokenTree::Group(g)) = i.next() {
+            g
+        } else {
+            panic!("Expected a group after {name}");
+        };
+
+        if m == Macro::Identity {
+            res.last_mut().expect("7").extend(g.stream())
+        } else {
+            input.push((g.stream().into_iter(), Some(m), g.delimiter()));
+            res.push(TokenStream::new());
+        }
+    }
+
+    res.pop().expect("8")
+}
+
+#[derive(PartialEq, Clone, Copy)]
+enum Macro {
+    Ignore,
+    Identity,
+    Dollar,
+    String,
+    Head,
+    Tail,
+    Start,
+    Last,
+    Reverse,
+    Identifier,
+    Stringify,
+}
+
+impl Macro {
+    fn from_name(s: &str) -> Option<Macro> {
+        match s {
+            "__ignore__" => Some(Self::Ignore),
+            "__identity__" => Some(Self::Identity),
+            "__dollar__" => Some(Self::Dollar),
+            "__string__" => Some(Self::String),
+            "__head__" => Some(Self::Head),
+            "__tail__" => Some(Self::Tail),
+            "__start__" => Some(Self::Start),
+            "__last__" => Some(Self::Last),
+            "__reverse__" => Some(Self::Reverse),
+            "__identifier__" => Some(Self::Identifier),
+            "__stringify__" => Some(Self::Stringify),
+            _ => None,
+        }
+    }
+
+    fn invoke(&self, input: TokenStream) -> TokenStream {
+        match self {
+            Macro::Ignore => ignore(input),
+            Macro::Identity => identity(input),
+            Macro::Dollar => dollar(input),
+            Macro::String => string(input),
+            Macro::Head => head(input),
+            Macro::Tail => tail(input),
+            Macro::Start => start(input),
+            Macro::Last => last(input),
+            Macro::Reverse => reverse(input),
+            Macro::Identifier => identifier(input),
+            Macro::Stringify => stringify(input),
+        }
+    }
 }
