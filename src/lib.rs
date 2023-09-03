@@ -365,9 +365,9 @@ pub fn stringify(input: TokenStream) -> TokenStream {
 /// use place_macro::replace_newline;
 ///
 /// let v = replace_newline!("hello
-///     everybody
+///     every body
 /// ", ", ");
-/// assert_eq!(v, "hello, everybody");
+/// assert_eq!(v, "hello, every body, ");
 /// ```
 #[proc_macro]
 pub fn replace_newline(input: TokenStream) -> TokenStream {
@@ -402,6 +402,7 @@ pub fn replace_newline(input: TokenStream) -> TokenStream {
         while let Some(c) = i.next() {
             if !c.is_whitespace() {
                 res.push(c);
+                break;
             }
         }
     }
