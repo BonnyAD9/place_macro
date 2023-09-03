@@ -2,6 +2,10 @@
 name = "place_macro"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+description = "Macros you wish you had while you were writing your non-proc macro."
+repository = "https://github.com/BonnyAD9/place_macro/tree/master"
+readme = "README.md"
 
 [lib]
 proc-macro = true
