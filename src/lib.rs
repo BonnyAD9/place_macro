@@ -357,6 +357,107 @@ pub fn stringify(input: TokenStream) -> TokenStream {
     res
 }
 
+/// Replaces newlines and follwing whitespace in string literal with another
+/// string.
+///
+/// # Example
+/// ```
+/// use place_macro::replace_newline;
+///
+/// let v = replace_newline!("hello
+///     everybody
+/// ", ", ");
+/// assert_eq!(v, "hello, everybody");
+/// ```
+#[proc_macro]
+pub fn replace_newline(input: TokenStream) -> TokenStream {
+    let mut i = input.into_iter();
+    let s = match i.next() {
+        Some(s) => s,
+        None => panic!("Expected two arguments, got 0"),
+    };
+    i.next();
+    let r = match i.next() {
+        Some(s) => s,
+        None => panic!("Expected two arguments, got 1"),
+    };
+
+    let s = match litrs::StringLit::try_from(s) {
+        Ok(s) => s.into_value(),
+        Err(_) => panic!("First argument must be string literal"),
+    };
+    let r = match litrs::StringLit::try_from(r) {
+        Ok(r) => r.into_value(),
+        Err(_) => panic!("Second argument must be string literal"),
+    };
+
+    let mut res = String::new();
+    let mut i = s.chars();
+    while let Some(c) = i.next() {
+        if c != '\n' {
+            res.push(c);
+            continue;
+        }
+        res += &r;
+        while let Some(c) = i.next() {
+            if !c.is_whitespace() {
+                res.push(c);
+            }
+        }
+    }
+
+    let mut r = TokenStream::new();
+    r.extend([TokenTree::Literal(Literal::string(&res))]);
+    r
+}
+
+/// Replaces in string literal
+///
+/// # Examples
+/// ```
+/// use place_macro::str_replace;
+///
+/// let s = str_replace!("hello runtime replace", "runtime", "compile-time");
+/// assert_eq!(s, "hello compile-time replace");
+/// ```
+#[proc_macro]
+pub fn str_replace(input: TokenStream) -> TokenStream {
+    let mut i = input.into_iter();
+    let s = match i.next() {
+        Some(s) => s,
+        None => panic!("Expected 3 arguments, got 0"),
+    };
+    i.next();
+    let f = match i.next() {
+        Some(f) => f,
+        None => panic!("Expected 3 arguments, got 1"),
+    };
+    i.next();
+    let t = match i.next() {
+        Some(t) => t,
+        None => panic!("Expected 3 arguments, got 2"),
+    };
+
+    let s = match litrs::StringLit::try_from(s) {
+        Ok(s) => s.into_value(),
+        Err(_) => panic!("First argument must be string literal"),
+    };
+    let f = match litrs::StringLit::try_from(f) {
+        Ok(f) => f.into_value(),
+        Err(_) => panic!("Second argument must be string literal"),
+    };
+    let t = match litrs::StringLit::try_from(t) {
+        Ok(t) => t.into_value(),
+        Err(_) => panic!("Third argument must be string literal"),
+    };
+
+    let res = s.replace(&f.to_string(), &t);
+
+    let mut r = TokenStream::new();
+    r.extend([TokenTree::Literal(Literal::string(&res))]);
+    r
+}
+
 fn token_concat(input: TokenStream) -> String {
     let mut input = vec![input.into_iter()];
     let mut res = String::new();
@@ -505,6 +606,8 @@ enum Macro {
     Reverse,
     Identifier,
     Stringify,
+    ReplaceNewline,
+    StrReplace,
 }
 
 impl Macro {
@@ -521,6 +624,8 @@ impl Macro {
             "__reverse__" => Some(Self::Reverse),
             "__identifier__" | "__ident__" => Some(Self::Identifier),
             "__stringify__" | "__strfy__" => Some(Self::Stringify),
+            "__replace_newline__" | "__repnl__" => Some(Self::ReplaceNewline),
+            "__str_replace__" | "__repstr__" => Some(Self::StrReplace),
             _ => None,
         }
     }
@@ -538,6 +643,8 @@ impl Macro {
             Macro::Reverse => reverse(input),
             Macro::Identifier => identifier(input),
             Macro::Stringify => stringify(input),
+            Macro::ReplaceNewline => replace_newline(input),
+            Macro::StrReplace => str_replace(input),
         }
     }
 }

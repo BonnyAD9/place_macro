@@ -22,6 +22,9 @@ this library in reverse expansion order.
 - `last`: expands to the last token
 - `reverse`: expands to the tokens in reverse order
 - `stringify`: expands to string of the input
+- `replace_newline`: replaces all newlines and folowing whitespace in literal
+  with the given literal
+- `str_replace`: replace in string literal
 
 ### The macro `place`
 Expands the other macros inside in reverse order. The macros inside that will
@@ -36,6 +39,8 @@ For some of the macros there are also shorter names:
 - `__dollar__` - `__s__`
 - `__identifier__` - `__ident__`
 - `__stringify__` - `__strfy__`
+- `__replace_newline__` - `__repnl__`
+- `__str_replace__` - `__repstr__`
 
 #### Example
 The following passes:
