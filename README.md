@@ -13,6 +13,8 @@ order.
 - `identity`: expands to what is given, it will be skipped by the `place` macro
 - `dollar`: expands to dollar sign `$`
 - `string`: concats the contents into single string, see the doc
+- `identifier`: concats the contents into sintle identifier in the same way as
+  string
 - `head`: expands to the first token
 - `tail`: expands to all but the first token
 - `start`: expands to all but the last token

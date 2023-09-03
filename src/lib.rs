@@ -1,4 +1,4 @@
-use proc_macro::{TokenStream, TokenTree, Punct, Spacing, token_stream, Literal};
+use proc_macro::{TokenStream, TokenTree, Punct, Spacing, token_stream, Literal, Ident, Span};
 
 
 /// Ignores all the input, as if there was nothing
@@ -58,40 +58,7 @@ pub fn dollar(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn string(input: TokenStream) -> TokenStream {
-    let mut input = vec![input.into_iter()];
-    let mut res = String::new();
-
-    while let Some(i) = input.last_mut() {
-        if let Some(t) = i.next() {
-            match t {
-                TokenTree::Group(g) => input.push(g.stream().into_iter()),
-                TokenTree::Ident(i) => res += &i.to_string(),
-                TokenTree::Punct(_) => {},
-                TokenTree::Literal(l) => {
-                    match litrs::Literal::from(l) {
-                        litrs::Literal::Bool(v) => res += &v.value().to_string(),
-                        litrs::Literal::Integer(v) => {
-                            if let Some(v) = v.value::<u128>() {
-                                res += &v.to_string()
-                            } else {
-                                panic!("Integer is too large");
-                            }
-                        },
-                        litrs::Literal::Float(v) => {
-                            let n: f64 = v.number_part().parse().unwrap();
-                            res += &n.to_string()
-                        },
-                        litrs::Literal::Char(v) => res.push(v.value()),
-                        litrs::Literal::String(v) => res += &v.into_value(),
-                        litrs::Literal::Byte(v) => res += &v.to_string(),
-                        litrs::Literal::ByteString(v) => res += &v.to_string(),
-                    }
-                },
-            }
-        } else {
-            input.pop();
-        }
-    }
+    let res = token_concat(input);
 
     let mut r = TokenStream::new();
     r.extend([
@@ -222,5 +189,66 @@ pub fn reverse(input: TokenStream) -> TokenStream {
     let mut res = TokenStream::new();
     let tok: Vec<_> = input.into_iter().collect();
     res.extend(tok.into_iter().rev());
+    res
+}
+
+/// Creates a identifier in the same way as the string macro creates string
+/// literals.
+///
+/// # Example
+/// ```
+/// use place_macro::identifier;
+///
+/// let my = 5;
+/// let var = 10;
+/// let myvar = 1;
+/// let n = identifier!(my + var);
+/// assert_eq!(n, myvar);
+/// ```
+#[proc_macro]
+pub fn identifier(input: TokenStream) -> TokenStream {
+    let res = token_concat(input);
+
+    let mut r = TokenStream::new();
+    r.extend([TokenTree::Ident(Ident::new(&res, Span::call_site()))].into_iter());
+    r
+}
+
+fn token_concat(input: TokenStream) -> String {
+    let mut input = vec![input.into_iter()];
+    let mut res = String::new();
+
+    while let Some(i) = input.last_mut() {
+        if let Some(t) = i.next() {
+            match t {
+                TokenTree::Group(g) => input.push(g.stream().into_iter()),
+                TokenTree::Ident(i) => res += &i.to_string(),
+                TokenTree::Punct(_) => {},
+                TokenTree::Literal(l) => {
+                    match litrs::Literal::from(l) {
+                        litrs::Literal::Bool(v) => res += &v.value().to_string(),
+                        litrs::Literal::Integer(v) => {
+                            if let Some(v) = v.value::<u128>() {
+                                res += &v.to_string()
+                            } else {
+                                panic!("Integer is too large");
+                            }
+                        },
+                        litrs::Literal::Float(v) => {
+                            let n: f64 = v.number_part().parse().unwrap();
+                            res += &n.to_string()
+                        },
+                        litrs::Literal::Char(v) => res.push(v.value()),
+                        litrs::Literal::String(v) => res += &v.into_value(),
+                        litrs::Literal::Byte(v) => res += &v.to_string(),
+                        litrs::Literal::ByteString(v) => res += &v.to_string(),
+                    }
+                },
+            }
+        } else {
+            input.pop();
+        }
+    }
+
     res
 }
