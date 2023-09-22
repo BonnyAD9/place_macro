@@ -1,6 +1,8 @@
 use place_macro::place;
 
 fn asd() {
-    let i = place!(__ignore__ __tail__("hello"));
-    println!("{}", i);
+    place! {
+        let __to_case__(MyVariable) = "";
+    }
+    println!("{}", my_variable);
 }

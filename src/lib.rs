@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use convert_case::{Casing, Case};
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 
 ///!Macros you wish you had while you were writing your non-proc macro.
@@ -461,6 +462,40 @@ pub fn str_replace(input: TokenStream) -> TokenStream {
     r
 }
 
+#[proc_macro]
+pub fn to_case(input: TokenStream) -> TokenStream {
+    let mut i = input.into_iter();
+
+    let dst = if let Some(TokenTree::Ident(l)) = i.next() {
+        l.to_string()
+    } else {
+        panic!("Expected the first argument to be identifier");
+    };
+
+    let src = if let Some(TokenTree::Ident(l)) = i.next() {
+        l.to_string()
+    } else {
+        panic!("Expected the second argument to be identifier");
+    };
+
+    let s = get_case(&dst, &src);
+    let mut res = TokenStream::new();
+    res.extend([TokenTree::Ident(Ident::new(&s, Span::call_site()))]);
+    res
+}
+
+fn get_case(spec: &str, i: &str) -> String {
+    match spec {
+        "TOCASE" => i.to_case(Case::UpperFlat),
+        "tocase" => i.to_case(Case::Flat),
+        "toCase" => i.to_case(Case::Camel),
+        "ToCase" => i.to_case(Case::Pascal),
+        "to_case" => i.to_case(Case::Snake),
+        "TO_CASE" => i.to_case(Case::UpperSnake),
+        _ => panic!("Unknown case specifier: '{spec}'"),
+    }
+}
+
 fn token_concat(input: TokenStream) -> String {
     let mut input = vec![input.into_iter()];
     let mut res = String::new();
@@ -627,6 +662,12 @@ pub fn place(input: TokenStream) -> TokenStream {
 
         if m == Macro::Identity {
             res.last_mut().expect("7").extend(g.stream())
+        } else if m == Macro::ToCase {
+            let mut s = TokenStream::new();
+            s.extend([TokenTree::Ident(Ident::new(name.trim_matches('_'), Span::call_site()))]);
+            s.extend(g.stream().into_iter());
+            input.push((s.into_iter(), Some(m), g.delimiter()));
+            res.push(TokenStream::new());
         } else {
             input.push((g.stream().into_iter(), Some(m), g.delimiter()));
             res.push(TokenStream::new());
@@ -651,6 +692,7 @@ enum Macro {
     Stringify,
     ReplaceNewline,
     StrReplace,
+    ToCase,
 }
 
 impl Macro {
@@ -669,6 +711,14 @@ impl Macro {
             "__stringify__" | "__strfy__" => Some(Self::Stringify),
             "__replace_newline__" | "__repnl__" => Some(Self::ReplaceNewline),
             "__str_replace__" | "__repstr__" => Some(Self::StrReplace),
+            s if s.starts_with("__") && s.ends_with("__") => {
+                let lc = s.to_lowercase();
+                if lc == "__tocase__" || lc == "__to_case__" {
+                    Some(Self::ToCase)
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -688,6 +738,7 @@ impl Macro {
             Macro::Stringify => stringify(input),
             Macro::ReplaceNewline => replace_newline(input),
             Macro::StrReplace => str_replace(input),
+            Macro::ToCase => to_case(input),
         }
     }
 }
