@@ -596,10 +596,33 @@ pub fn place(input: TokenStream) -> TokenStream {
             Some(m) => m,
         };
 
-        let g = if let Some(TokenTree::Group(g)) = i.next() {
-            g
-        } else {
-            panic!("Expected a group after {name}");
+        let g = match i.next() {
+            Some(TokenTree::Group(g)) => g,
+            Some(TokenTree::Ident(id)) => {
+                if m != Macro::Ignore {
+                    panic!("Expected a group after {name}");
+                }
+
+                let iname = id.to_string();
+                if let Some(m) =  Macro::from_name(&iname) {
+                    if m == Macro::Dollar {
+                        continue;
+                    }
+                } else {
+                    panic!("Expected a group or builtin macro after {name}");
+                }
+
+                if let Some(TokenTree::Group(g)) = i.next() {
+                    let l = input.pop().unwrap();
+                    let mut s = g.stream();
+                    s.extend(l.0);
+                    input.push((s.into_iter(), l.1, l.2));
+                    continue;
+                }
+
+                panic!("Expected a group after {iname}");
+            }
+            _ => panic!("Expected a group after {name}"),
         };
 
         if m == Macro::Identity {
