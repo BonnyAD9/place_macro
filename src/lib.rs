@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use convert_case::{Casing, Case};
+use convert_case::{Case, Casing};
 use proc_macro::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 
 ///!Macros you wish you had while you were writing your non-proc macro.
@@ -544,7 +544,7 @@ fn get_str_lit<'a>(tt: TokenTree) -> Option<Cow<'a, str>> {
             } else {
                 get_str_lit(t1.unwrap())
             }
-        },
+        }
         TokenTree::Literal(l) => litrs::StringLit::try_from(l).map(|l| l.into_value()).ok(),
         _ => None,
     }
@@ -639,7 +639,7 @@ pub fn place(input: TokenStream) -> TokenStream {
                 }
 
                 let iname = id.to_string();
-                if let Some(m) =  Macro::from_name(&iname) {
+                if let Some(m) = Macro::from_name(&iname) {
                     if m == Macro::Dollar {
                         continue;
                     }
@@ -664,7 +664,10 @@ pub fn place(input: TokenStream) -> TokenStream {
             res.last_mut().expect("7").extend(g.stream())
         } else if m == Macro::ToCase {
             let mut s = TokenStream::new();
-            s.extend([TokenTree::Ident(Ident::new(name.trim_matches('_'), Span::call_site()))]);
+            s.extend([TokenTree::Ident(Ident::new(
+                name.trim_matches('_'),
+                Span::call_site(),
+            ))]);
             s.extend(g.stream().into_iter());
             input.push((s.into_iter(), Some(m), g.delimiter()));
             res.push(TokenStream::new());
