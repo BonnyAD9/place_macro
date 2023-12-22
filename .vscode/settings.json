@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./place_macro_core/Cargo.toml",
+        "./place_macro_core/Cargo.toml",
+        "./place_macro_core/Cargo.toml"
+    ]
+}

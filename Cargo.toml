@@ -7,11 +7,11 @@ description = "Macros you wish you had while you were writing your non-proc macr
 repository = "https://github.com/BonnyAD9/place_macro/tree/master"
 readme = "README.md"
 
-[lib]
-proc-macro = true
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = [
+    "place_macro_core",
+    "place_macro_proc"
+]
 
 [dependencies]
-convert_case = "0.6.0"
-litrs = "0.4.0"
+place_macro_proc = { path = "place_macro_proc" }

@@ -1,0 +1,13 @@
+[package]
+name = "place_macro_core"
+version = "0.2.0"
+edition = "2021"
+# license-file = "LICENSE"
+# description = "Macros you wish you had while you were writing your non-proc macro."
+# repository = "https://github.com/BonnyAD9/place_macro/tree/master"
+# readme = "README.md"
+
+[dependencies]
+convert_case = "0.6.0"
+litrs = "0.4.1"
+proc-macro2 = "1.0.71"
