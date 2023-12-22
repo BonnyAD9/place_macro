@@ -1,33 +1,41 @@
+//! # Place-macro
 //! Macros you wish you had while you were writing your non-proc macro.
 //!
 //! This library privides some macros that make writing regural non-proc
 //! macros much simpler, readable and with less dirty tricks.
 //!
-//! The main macro of this library is `place`. It is able to expand the macros in
-//! this library in reverse expansion order.
+//! The main macro of this library is `place`. It is able to expand the macros
+//! in this library in reverse expansion order.
+//!
+//! Every time I'm missing a proc macro while creating macro, I will add it
+//! here :).
 //!
 //! ## Macros
 //! + `place`: expands the following macros in reverse order, see below
 //! - `ignore`: expands to nothing
-//! - `identity`: expands to what is given, it bypasses the reverse order in the
-//!   `place` macro
+//! - `identity`: expands to what is given, it bypasses the reverse order in
+//!   the `place` macro
 //! - `dollar`: expands to dollar sign `$`
 //! - `string`: concats the contents into single string, see the doc
-//! - `identifier`: concats the contents into sintle identifier in the same way as
-//!   string
+//! - `identifier`: concats the contents into sintle identifier in the same way
+//!   asstring
 //! - `head`: expands to the first token
 //! - `tail`: expands to all but the first token
 //! - `start`: expands to all but the last token
 //! - `last`: expands to the last token
 //! - `reverse`: expands to the tokens in reverse order
 //! - `stringify`: expands to string of the input
+//! - `replace_newline`: replaces all newlines and folowing whitespace in
+//!   literal with the given literal
+//! - `str_replace`: replace in string literal
+//! - `to_case`: change the case of a identifier
 //!
 //! ### The macro `place`
-//! Expands the other macros inside in reverse order. The macros inside that will
-//! be expanded are used with a different sintax: instead of calling a macro as
-//! `string!("hello" "there")` you call it as `__string__("hello" "there")`. One
-//! exception is the macro `dollar` that is called without the parenthesis:
-//! `__dollar__` instead of `dollar!()`.
+//! Expands the other macros inside in reverse order. The macros inside that
+//! will be expanded are used with a different sintax: instead of calling a
+//! macro as `string!("hello" "there")` you call it as
+//! `__string__("hello" "there")`. One exception is the macro `dollar` that is
+//! called without the parenthesis: `__dollar__` instead of `__dollar__()`.
 //!
 //! For some of the macros there are also shorter names:
 //! - `__identity__` - `__id__`
@@ -35,6 +43,18 @@
 //! - `__dollar__` - `__s__`
 //! - `__identifier__` - `__ident__`
 //! - `__stringify__` - `__strfy__`
+//! - `__replace_newline__` - `__repnl__`
+//! - `__str_replace__` - `__repstr__`
+//!
+//! The macro `to_case` has simplified usage, the case of the macro call will
+//! determine the case to which convert (e.g. `__ToCase__(my_ident)` will
+//! expand to `MyIdent`). Possible variants:
+//! - `__TOCASE__`
+//! - `__tocase__`
+//! - `__toCase__`
+//! - `__ToCase__`
+//! - `__to_case__`
+//! - `__TO_CASE__`
 //!
 //! #### Example
 //! The following passes:
@@ -62,12 +82,10 @@
 //! }
 //!
 //! my_cool_macro! { foo -> &'static str, "cool!" }
-//! // Expands to:
-//! // ```
-//! // fn cool_foo() -> &'static str {
-//! //     "cool!"
-//! // }
-//! // ```
+//! /// Expands to:
+//! fn cool_foo() -> &'static str {
+//!     "cool!"
+//! }
 //! ```
 //! - You can generate strings as macro parameters in your macros:
 //! ```rust
@@ -90,13 +108,11 @@
 //! }
 //!
 //! my_cool_macro! { foo -> &'static str, "cool!" }
-//! // Expands to:
-//! // ```
-//! // #[doc = "cool function called foo. Returns `&'static str`."]
-//! // fn cool_foo() -> &'static str {
-//! //     "cool!"
-//! // }
-//! // ```
+//! /// Expands to:
+//! #[doc = "cool function called foo. Returns `&'static str`."]
+//! fn cool_foo() -> &'static str {
+//!     "cool!"
+//! }
 //! ```
 //! - Or you can even generate macros in your macros
 //! ```rust
@@ -126,10 +142,17 @@
 //!
 //! my_cooler_macro! { cool };
 //! my_cool_macro! { foo -> &'static str, "cool!" }
-//! // now you have the same function as in the previous example
+//! /// now you have the same function as in the previous example
 //! ```
 //! The last example was a little less readable, but you can see that you can do
 //! a lot with this macro.
+//!
+//! ## Links
+//! - **Author:** [BonnyAD9](https://github.com/BonnyAD9)
+//! - **GitHub repository:** [BonnyAD/raplay](https://github.com/BonnyAD9/place_macro)
+//! - **Package:** [crates.io](https://crates.io/crates/place_macro)
+//! - **Documentation:** [docs.rs](https://docs.rs/place_macro/latest/place_macro/)
+//! - **My Website:** [bonnyad9.github.io](https://bonnyad9.github.io/)
 
 /// Ignores all the input, as if there was nothing
 ///

@@ -28,13 +28,14 @@ here :).
 - `replace_newline`: replaces all newlines and folowing whitespace in literal
   with the given literal
 - `str_replace`: replace in string literal
+- `to_case`: change the case of a identifier
 
 ### The macro `place`
 Expands the other macros inside in reverse order. The macros inside that will
 be expanded are used with a different sintax: instead of calling a macro as
 `string!("hello" "there")` you call it as `__string__("hello" "there")`. One
 exception is the macro `dollar` that is called without the parenthesis:
-`__dollar__` instead of `dollar!()`.
+`__dollar__` instead of `__dollar__()`.
 
 For some of the macros there are also shorter names:
 - `__identity__` - `__id__`
@@ -44,6 +45,16 @@ For some of the macros there are also shorter names:
 - `__stringify__` - `__strfy__`
 - `__replace_newline__` - `__repnl__`
 - `__str_replace__` - `__repstr__`
+
+The macro `to_case` has simplified usage, the case of the macro call will
+determine the case to which convert (e.g. `__ToCase__(my_ident)` will expand to
+`MyIdent`). Possible variants:
+- `__TOCASE__`
+- `__tocase__`
+- `__toCase__`
+- `__ToCase__`
+- `__to_case__`
+- `__TO_CASE__`
 
 #### Example
 The following passes:
