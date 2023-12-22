@@ -2,10 +2,10 @@
 name = "place_macro_proc"
 version = "0.2.0"
 edition = "2021"
-# license-file = "LICENSE"
-# description = "Macros you wish you had while you were writing your non-proc macro."
-# repository = "https://github.com/BonnyAD9/place_macro/tree/master"
-# readme = "README.md"
+license-file = "../LICENSE"
+description = "This crate contains the procedural macros for place_macro."
+repository = "https://github.com/BonnyAD9/place_macro/tree/master"
+readme = "../README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
