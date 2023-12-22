@@ -149,7 +149,7 @@ a lot with this macro.
 
 ## Links
 - **Author:** [BonnyAD9](https://github.com/BonnyAD9)
-- **GitHub repository:** [BonnyAD/raplay](https://github.com/BonnyAD9/place_macro)
+- **GitHub repository:** [BonnyAD/place_macro](https://github.com/BonnyAD9/place_macro)
 - **Package:** [crates.io](https://crates.io/crates/place_macro)
 - **Documentation:** [docs.rs](https://docs.rs/place_macro/latest/place_macro/)
 - **My Website:** [bonnyad9.github.io](https://bonnyad9.github.io/)
