@@ -6,6 +6,48 @@ use proc_macro2::{
     TokenTree,
 };
 
+macro_rules! check_comma {
+    ($stream:expr, $pos:expr) => {
+        if let Some(tree) = $stream.next() {
+            if !is_comma(&tree) {
+                return error_at(tree.span(), "Expected comma.");
+            }
+        } else {
+            return error_at($pos, "Expected more arguments");
+        }
+    };
+}
+
+fn spanned(mut tree: TokenTree, span: Span) -> TokenTree {
+    tree.set_span(span);
+    tree
+}
+
+fn error_at<S>(span: Span, msg: S) -> TokenStream
+where
+    S: AsRef<str>,
+{
+    [
+        TokenTree::Ident(Ident::new("compile_error", span)),
+        TokenTree::Punct(Punct::new('!', Spacing::Alone)),
+        spanned(TokenTree::Group(Group::new(
+            Delimiter::Parenthesis,
+            [TokenTree::Literal(Literal::string(msg.as_ref()))]
+                .into_iter()
+                .collect(),
+        )), span),
+    ]
+    .into_iter()
+    .collect()
+}
+
+fn is_comma(tree: &TokenTree) -> bool {
+    match tree {
+        TokenTree::Punct(p) if p.as_char() == ',' => true,
+        _ => false,
+    }
+}
+
 pub fn ignore(_input: TokenStream) -> TokenStream {
     TokenStream::new()
 }
@@ -15,10 +57,10 @@ pub fn identity(input: TokenStream) -> TokenStream {
 }
 
 pub fn dollar(input: TokenStream) -> TokenStream {
-    let r = if input.is_empty() {
-        TokenTree::Punct(Punct::new('$', Spacing::Alone))
+    let r = if let Some(t) = input.into_iter().next() {
+        return error_at(t.span(), "Macro `dollar` has no arguments.");
     } else {
-        panic!("No input was expected")
+        TokenTree::Punct(Punct::new('$', Spacing::Alone))
     };
 
     let mut res = TokenStream::new();
@@ -104,25 +146,34 @@ pub fn stringify(input: TokenStream) -> TokenStream {
     res
 }
 
-pub fn replace_newline(input: TokenStream) -> TokenStream {
+pub fn replace_newline(input: TokenStream, pos: Span) -> TokenStream {
     let mut i = input.into_iter();
     let s = match i.next() {
         Some(s) => s,
-        None => panic!("Expected two arguments, got 0"),
+        None => return error_at(pos, "Expected two arguments, got 0"),
     };
-    i.next();
+    check_comma!(i, pos);
     let r = match i.next() {
         Some(s) => s,
-        None => panic!("Expected two arguments, got 1"),
+        None => return error_at(pos, "Expected two arguments, got 1"),
     };
+    if let Some(n) = i.next() {
+        if is_comma(&n) {
+            if let Some(t) = i.next() {
+                return error_at(t.span(), "Macro takes only 2 arguments");
+            }
+        } else {
+            return error_at(n.span(), "Unexpected token in macro invocation");
+        }
+    }
 
-    let s = match get_str_lit(s) {
+    let s = match get_str_lit(s.clone()) {
         Some(s) => s,
-        None => panic!("First argument must be string literal"),
+        None => return error_at(s.span(), "Expected string literal"),
     };
-    let r = match get_str_lit(r) {
+    let r = match get_str_lit(r.clone()) {
         Some(r) => r,
-        None => panic!("Second argument must be string literal"),
+        None => return error_at(r.span(), "Expected string literal"),
     };
 
     let mut res = String::new();
@@ -146,34 +197,43 @@ pub fn replace_newline(input: TokenStream) -> TokenStream {
     r
 }
 
-pub fn str_replace(input: TokenStream) -> TokenStream {
+pub fn str_replace(input: TokenStream, pos: Span) -> TokenStream {
     let mut i = input.into_iter();
     let s = match i.next() {
         Some(s) => s,
-        None => panic!("Expected 3 arguments, got 0"),
+        None => return error_at(pos, "Expected 3 arguments, got 0"),
     };
-    i.next();
+    check_comma!(i, pos);
     let f = match i.next() {
         Some(f) => f,
-        None => panic!("Expected 3 arguments, got 1"),
+        None => return error_at(pos, "Expected 3 arguments, got 1"),
     };
-    i.next();
+    check_comma!(i, pos);
     let t = match i.next() {
         Some(t) => t,
-        None => panic!("Expected 3 arguments, got 2"),
+        None => return error_at(pos, "Expected 3 arguments, got 2"),
     };
+    if let Some(n) = i.next() {
+        if is_comma(&n) {
+            if let Some(t) = i.next() {
+                return error_at(t.span(), "Macro takes only 3 arguments");
+            }
+        } else {
+            return error_at(n.span(), "Unexpected token in macro invocation");
+        }
+    }
 
-    let s = match get_str_lit(s) {
+    let s = match get_str_lit(s.clone()) {
         Some(s) => s,
-        None => panic!("First argument must be string literal"),
+        None => return error_at(s.span(), "Expected string literal"),
     };
-    let f = match get_str_lit(f) {
+    let f = match get_str_lit(f.clone()) {
         Some(f) => f,
-        None => panic!("Second argument must be string literal"),
+        None => return error_at(f.span(), "Expected string literal"),
     };
-    let t = match get_str_lit(t) {
+    let t = match get_str_lit(t.clone()) {
         Some(t) => t,
-        None => panic!("Second argument must be string literal"),
+        None => return error_at(t.span(), "Expected string literal"),
     };
 
     let res = s.replace(&f.to_string(), &t);
@@ -183,22 +243,36 @@ pub fn str_replace(input: TokenStream) -> TokenStream {
     r
 }
 
-pub fn to_case(input: TokenStream) -> TokenStream {
+pub fn to_case(input: TokenStream, pos: Span) -> TokenStream {
     let mut i = input.into_iter();
 
-    // TODO first is string literal
-    let dst = if let Some(TokenTree::Ident(l)) = i.next() {
-        l.to_string()
-    } else {
-        panic!("Expected the first argument to be identifier");
+    let dst = match i.next() {
+        Some(s) => s,
+        None => return error_at(pos, "Expected 2 arguments."),
     };
+    check_comma!(i, pos);
+    let src = match i.next() {
+        Some(s) => s,
+        None => return error_at(pos, "Expected 2 arguments"),
+    };
+    if let Some(n) = i.next() {
+        if is_comma(&n) {
+            if let Some(t) = i.next() {
+                return error_at(t.span(), "Macro takes only 2 arguments");
+            }
+        } else {
+            return error_at(n.span(), "Unexpected token in macro invocation");
+        }
+    }
 
-    // TODO comma
-
-    let src = if let Some(TokenTree::Ident(l)) = i.next() {
+    let dst = match get_str_lit(dst.clone()) {
+        Some(s) => s,
+        None => return error_at(dst.span(), "Expected string literal"),
+    };
+    let src = if let TokenTree::Ident(l) = src {
         l.to_string()
     } else {
-        panic!("Expected the second argument to be identifier");
+        return error_at(src.span(), "Expected identifier");
     };
 
     let s = get_case(&dst, &src);
@@ -314,7 +388,7 @@ pub fn place(input: TokenStream) -> TokenStream {
         };
 
         let name = id.to_string();
-        let m = match Macro::from_name(&name) {
+        let m = match Macro::from_name(&name, id.span()) {
             None => {
                 res.last_mut().expect("6").extend([TokenTree::Ident(id)]);
                 continue;
@@ -331,35 +405,41 @@ pub fn place(input: TokenStream) -> TokenStream {
         let g = match i.next() {
             Some(TokenTree::Group(g)) => g,
             Some(TokenTree::Ident(id)) => {
-                if m != Macro::Ignore {
-                    panic!("Expected a group after {name}");
+                if !matches!(m, Macro::Ignore) {
+                    return error_at(id.span(), "Expected '('");
                 }
 
                 let iname = id.to_string();
-                if let Some(m) = Macro::from_name(&iname) {
-                    if m == Macro::Dollar {
+                if let Some(m) = Macro::from_name(&iname, id.span()) {
+                    if matches!(m, Macro::Dollar) {
                         continue;
                     }
                 } else {
-                    panic!("Expected a group or builtin macro after {name}");
+                    return error_at(id.span(), "Expected '(' or builtin macro");
                 }
 
-                if let Some(TokenTree::Group(g)) = i.next() {
-                    let l = input.pop().unwrap();
-                    let mut s = g.stream();
-                    s.extend(l.0);
-                    input.push((s.into_iter(), l.1, l.2));
-                    continue;
+                let mut pos = id.span();
+                if let Some(g) = i.next() {
+                    if let TokenTree::Group(g) = g {
+                        let l = input.pop().unwrap();
+                        let mut s = g.stream();
+                        s.extend(l.0);
+                        input.push((s.into_iter(), l.1, l.2));
+                        continue;
+                    } else {
+                        pos = g.span();
+                    }
                 }
 
-                panic!("Expected a group after {iname}");
+                return error_at(pos, "Expected '('");
             }
-            _ => panic!("Expected a group after {name}"),
+            Some(t) => return error_at(t.span(), "Expected '('"),
+            None => return error_at(id.span(), "Expected '(' after builtin macro"),
         };
 
-        if m == Macro::Identity {
+        if matches!(m, Macro::Identity) {
             res.last_mut().expect("7").extend(g.stream())
-        } else if m == Macro::ToCase {
+        } else if matches!(m, Macro::ToCase(_)) {
             let mut s = TokenStream::new();
             s.extend([TokenTree::Ident(Ident::new(
                 name.trim_matches('_'),
@@ -377,7 +457,7 @@ pub fn place(input: TokenStream) -> TokenStream {
     res.pop().expect("8")
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(Clone, Copy)]
 enum Macro {
     Ignore,
     Identity,
@@ -390,13 +470,13 @@ enum Macro {
     Reverse,
     Identifier,
     Stringify,
-    ReplaceNewline,
-    StrReplace,
-    ToCase,
+    ReplaceNewline(Span),
+    StrReplace(Span),
+    ToCase(Span),
 }
 
 impl Macro {
-    fn from_name(s: &str) -> Option<Macro> {
+    fn from_name(s: &str, pos: Span) -> Option<Macro> {
         match s {
             "__ignore__" => Some(Self::Ignore),
             "__identity__" | "__id__" => Some(Self::Identity),
@@ -409,12 +489,12 @@ impl Macro {
             "__reverse__" => Some(Self::Reverse),
             "__identifier__" | "__ident__" => Some(Self::Identifier),
             "__stringify__" | "__strfy__" => Some(Self::Stringify),
-            "__replace_newline__" | "__repnl__" => Some(Self::ReplaceNewline),
-            "__str_replace__" | "__repstr__" => Some(Self::StrReplace),
+            "__replace_newline__" | "__repnl__" => Some(Self::ReplaceNewline(pos)),
+            "__str_replace__" | "__repstr__" => Some(Self::StrReplace(pos)),
             s if s.starts_with("__") && s.ends_with("__") => {
                 let lc = s.to_lowercase();
                 if lc == "__tocase__" || lc == "__to_case__" {
-                    Some(Self::ToCase)
+                    Some(Self::ToCase(pos))
                 } else {
                     None
                 }
@@ -436,9 +516,9 @@ impl Macro {
             Macro::Reverse => reverse(input),
             Macro::Identifier => identifier(input),
             Macro::Stringify => stringify(input),
-            Macro::ReplaceNewline => replace_newline(input),
-            Macro::StrReplace => str_replace(input),
-            Macro::ToCase => to_case(input),
+            Macro::ReplaceNewline(pos) => replace_newline(input, pos.clone()),
+            Macro::StrReplace(pos) => str_replace(input, pos.clone()),
+            Macro::ToCase(pos) => to_case(input, pos.clone()),
         }
     }
 }

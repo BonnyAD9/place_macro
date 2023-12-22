@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 
 #[proc_macro]
 pub fn ignore(input: TokenStream) -> TokenStream {
@@ -57,17 +58,17 @@ pub fn stringify(input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn replace_newline(input: TokenStream) -> TokenStream {
-    place_macro_core::replace_newline(input.into()).into()
+    place_macro_core::replace_newline(input.into(), Span::mixed_site()).into()
 }
 
 #[proc_macro]
 pub fn str_replace(input: TokenStream) -> TokenStream {
-    place_macro_core::str_replace(input.into()).into()
+    place_macro_core::str_replace(input.into(), Span::mixed_site()).into()
 }
 
 #[proc_macro]
 pub fn to_case(input: TokenStream) -> TokenStream {
-    place_macro_core::to_case(input.into()).into()
+    place_macro_core::to_case(input.into(), Span::mixed_site()).into()
 }
 
 #[proc_macro]
