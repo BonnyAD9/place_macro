@@ -1,6 +1,6 @@
 [package]
 name = "place_macro_proc"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2021"
 license-file = "../LICENSE"
 description = "This crate contains the procedural macros for place_macro."

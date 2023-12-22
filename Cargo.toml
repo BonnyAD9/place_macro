@@ -1,6 +1,6 @@
 [package]
 name = "place_macro"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2021"
 license-file = "LICENSE"
 description = "Macros you wish you had while you were writing your non-proc macro."

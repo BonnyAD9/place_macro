@@ -82,10 +82,12 @@
 //! }
 //!
 //! my_cool_macro! { foo -> &'static str, "cool!" }
-//! /// Expands to:
-//! fn cool_foo() -> &'static str {
-//!     "cool!"
-//! }
+//! // Expands to:
+//! // ```
+//! // fn cool_foo() -> &'static str {
+//! //     "cool!"
+//! // }
+//! // ```
 //! ```
 //! - You can generate strings as macro parameters in your macros:
 //! ```rust
@@ -108,11 +110,13 @@
 //! }
 //!
 //! my_cool_macro! { foo -> &'static str, "cool!" }
-//! /// Expands to:
-//! #[doc = "cool function called foo. Returns `&'static str`."]
-//! fn cool_foo() -> &'static str {
-//!     "cool!"
-//! }
+//! // Expands to:
+//! // ```
+//! // #[doc = "cool function called foo. Returns `&'static str`."]
+//! // fn cool_foo() -> &'static str {
+//! //     "cool!"
+//! // }
+//! // ```
 //! ```
 //! - Or you can even generate macros in your macros
 //! ```rust
@@ -142,7 +146,7 @@
 //!
 //! my_cooler_macro! { cool };
 //! my_cool_macro! { foo -> &'static str, "cool!" }
-//! /// now you have the same function as in the previous example
+//! // now you have the same function as in the previous example
 //! ```
 //! The last example was a little less readable, but you can see that you can do
 //! a lot with this macro.
@@ -338,7 +342,7 @@ pub use place_macro_proc::str_replace;
 ///
 /// let my_var = 5;
 /// let MyVar = 10;
-/// let n = to_case!(ToCase my_var);
+/// let n = to_case!("ToCase", my_var);
 /// assert_eq!(n, MyVar);
 /// ```
 pub use place_macro_proc::to_case;
