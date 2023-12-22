@@ -1,5 +1,5 @@
 # Place-macro
-[![crates.io](crates.io-badge)][crates.io]
+[![crates.io][crates.io-badge]][crates.io]
 
 Macros you wish you had while you were writing your non-proc macro.
 
@@ -10,10 +10,10 @@ The main macro of this library is `place`. It is able to expand the macros in
 this library in reverse expansion order.
 
 If you have some macros that you would like to add feel free to open new issue
-on [GitHub](github).
+on [GitHub][github].
 
 ## Macros
-+ `place`: expands the following macros in reverse order, see [docs](docs.rs)
++ `place`: expands the following macros in reverse order, see [docs][docs.rs]
    for more info
 - `ignore`: expands to nothing
 - `identity`: expands to what is given, it bypasses the reverse order in the
@@ -35,14 +35,14 @@ on [GitHub](github).
 
 ## Examples
 For examples and more detailed info about how to use the macros in this crate
-see [docs](docs.rs)
+see [docs][docs.rs]
 
 ## Links
-- **Author:** [BonnyAD9](author)
-- **GitHub repository:** [BonnyAD/place_macro](github)
-- **Package:** [crates.io](crates.io)
-- **Documentation:** [docs.rs](docs.rs)
-- **My Website:** [bonnyad9.github.io](wbsite)
+- **Author:** [BonnyAD9][author]
+- **GitHub repository:** [BonnyAD/place_macro][github]
+- **Package:** [crates.io][crates.io]
+- **Documentation:** [docs.rs][docs.rs]
+- **My Website:** [bonnyad9.github.io][wbsite]
 
 [crates.io]: https://crates.io/crates/place_macro
 [crates.io-badge]: https://img.shields.io/crates/v/place_macro
