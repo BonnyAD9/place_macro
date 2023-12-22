@@ -14,4 +14,4 @@ proc-macro = true
 
 [dependencies]
 proc-macro2 = "1.0.71"
-place_macro_core = { path = "../place_macro_core" }
+place_macro_core = { path = "../place_macro_core", version = "1.0.0" }

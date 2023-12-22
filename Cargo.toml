@@ -14,4 +14,4 @@ members = [
 ]
 
 [dependencies]
-place_macro_proc = { path = "place_macro_proc" }
+place_macro_proc = { path = "place_macro_proc", version = "1.0.0" }
