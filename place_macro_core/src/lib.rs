@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
 use convert_case::{Case, Casing};
-use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
+use proc_macro2::{
+    Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream,
+    TokenTree,
+};
 
 pub fn ignore(_input: TokenStream) -> TokenStream {
     TokenStream::new()
@@ -89,7 +92,9 @@ pub fn identifier(input: TokenStream) -> TokenStream {
     let res = token_concat(input);
 
     let mut r = TokenStream::new();
-    r.extend([TokenTree::Ident(Ident::new(&res, Span::call_site()))].into_iter());
+    r.extend(
+        [TokenTree::Ident(Ident::new(&res, Span::call_site()))].into_iter(),
+    );
     r
 }
 
@@ -263,13 +268,16 @@ fn get_str_lit<'a>(tt: TokenTree) -> Option<Cow<'a, str>> {
                 get_str_lit(t1.unwrap())
             }
         }
-        TokenTree::Literal(l) => litrs::StringLit::try_from(l).map(|l| l.into_value()).ok(),
+        TokenTree::Literal(l) => {
+            litrs::StringLit::try_from(l).map(|l| l.into_value()).ok()
+        }
         _ => None,
     }
 }
 
 pub fn place(input: TokenStream) -> TokenStream {
-    let mut input: Vec<(_, Option<Macro>, _)> = vec![(input.into_iter(), None, Delimiter::None)];
+    let mut input: Vec<(_, Option<Macro>, _)> =
+        vec![(input.into_iter(), None, Delimiter::None)];
     let mut res = vec![TokenStream::new()];
 
     while let Some((i, m, d)) = input.last_mut() {
