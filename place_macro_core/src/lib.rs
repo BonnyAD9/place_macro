@@ -30,22 +30,22 @@ where
     [
         TokenTree::Ident(Ident::new("compile_error", span)),
         TokenTree::Punct(Punct::new('!', Spacing::Alone)),
-        spanned(TokenTree::Group(Group::new(
-            Delimiter::Parenthesis,
-            [TokenTree::Literal(Literal::string(msg.as_ref()))]
-                .into_iter()
-                .collect(),
-        )), span),
+        spanned(
+            TokenTree::Group(Group::new(
+                Delimiter::Parenthesis,
+                [TokenTree::Literal(Literal::string(msg.as_ref()))]
+                    .into_iter()
+                    .collect(),
+            )),
+            span,
+        ),
     ]
     .into_iter()
     .collect()
 }
 
 fn is_comma(tree: &TokenTree) -> bool {
-    match tree {
-        TokenTree::Punct(p) if p.as_char() == ',' => true,
-        _ => false,
-    }
+    matches!(tree, TokenTree::Punct(p) if p.as_char() == ',')
 }
 
 pub fn ignore(_input: TokenStream) -> TokenStream {
@@ -64,7 +64,7 @@ pub fn dollar(input: TokenStream) -> TokenStream {
     };
 
     let mut res = TokenStream::new();
-    res.extend([r].into_iter());
+    res.extend([r]);
     res
 }
 
@@ -72,14 +72,14 @@ pub fn string(input: TokenStream) -> TokenStream {
     let res = token_concat(input);
 
     let mut r = TokenStream::new();
-    r.extend([TokenTree::Literal(Literal::string(res.as_str()))].into_iter());
+    r.extend([TokenTree::Literal(Literal::string(res.as_str()))]);
     r
 }
 
 pub fn head(input: TokenStream) -> TokenStream {
     let mut res = TokenStream::new();
     if let Some(t) = input.into_iter().next() {
-        res.extend([t].into_iter());
+        res.extend([t]);
     }
     res
 }
@@ -118,7 +118,7 @@ pub fn last(input: TokenStream) -> TokenStream {
     let mut i = input.into_iter();
     let f = i.next().unwrap();
     let last = i.fold(f, |_, c| c);
-    res.extend([last].into_iter());
+    res.extend([last]);
 
     res
 }
@@ -134,9 +134,7 @@ pub fn identifier(input: TokenStream) -> TokenStream {
     let res = token_concat(input);
 
     let mut r = TokenStream::new();
-    r.extend(
-        [TokenTree::Ident(Ident::new(&res, Span::call_site()))].into_iter(),
-    );
+    r.extend([TokenTree::Ident(Ident::new(&res, Span::call_site()))]);
     r
 }
 
@@ -184,7 +182,7 @@ pub fn replace_newline(input: TokenStream, pos: Span) -> TokenStream {
             continue;
         }
         res += &r;
-        while let Some(c) = i.next() {
+        for c in i.by_ref() {
             if !c.is_whitespace() {
                 res.push(c);
                 break;
@@ -336,10 +334,9 @@ fn get_str_lit<'a>(tt: TokenTree) -> Option<Cow<'a, str>> {
             let mut i = g.stream().into_iter();
             let t1 = i.next();
             let t2 = i.next();
-            if t1.is_none() || t2.is_some() {
-                None
-            } else {
-                get_str_lit(t1.unwrap())
+            match (t1, t2) {
+                (Some(t1), None) => get_str_lit(t1),
+                _ => None,
             }
         }
         TokenTree::Literal(l) => {
@@ -361,13 +358,11 @@ pub fn place(input: TokenStream) -> TokenStream {
                 if let Some(m) = m {
                     let t = res.pop().expect("1");
                     res.last_mut().expect("2").extend(m.invoke(t));
-                } else {
-                    if res.len() != 1 {
-                        let t = res.pop().expect("3");
-                        res.last_mut()
-                            .expect("4")
-                            .extend([TokenTree::Group(Group::new(*d, t))])
-                    }
+                } else if res.len() != 1 {
+                    let t = res.pop().expect("3");
+                    res.last_mut()
+                        .expect("4")
+                        .extend([TokenTree::Group(Group::new(*d, t))])
                 }
                 input.pop();
                 continue;
@@ -415,7 +410,10 @@ pub fn place(input: TokenStream) -> TokenStream {
                         continue;
                     }
                 } else {
-                    return error_at(id.span(), "Expected '(' or builtin macro");
+                    return error_at(
+                        id.span(),
+                        "Expected '(' or builtin macro",
+                    );
                 }
 
                 let mut pos = id.span();
@@ -434,7 +432,9 @@ pub fn place(input: TokenStream) -> TokenStream {
                 return error_at(pos, "Expected '('");
             }
             Some(t) => return error_at(t.span(), "Expected '('"),
-            None => return error_at(id.span(), "Expected '(' after builtin macro"),
+            None => {
+                return error_at(id.span(), "Expected '(' after builtin macro")
+            }
         };
 
         if matches!(m, Macro::Identity) {
@@ -489,7 +489,9 @@ impl Macro {
             "__reverse__" => Some(Self::Reverse),
             "__identifier__" | "__ident__" => Some(Self::Identifier),
             "__stringify__" | "__strfy__" => Some(Self::Stringify),
-            "__replace_newline__" | "__repnl__" => Some(Self::ReplaceNewline(pos)),
+            "__replace_newline__" | "__repnl__" => {
+                Some(Self::ReplaceNewline(pos))
+            }
             "__str_replace__" | "__repstr__" => Some(Self::StrReplace(pos)),
             s if s.starts_with("__") && s.ends_with("__") => {
                 let lc = s.to_lowercase();
@@ -516,9 +518,9 @@ impl Macro {
             Macro::Reverse => reverse(input),
             Macro::Identifier => identifier(input),
             Macro::Stringify => stringify(input),
-            Macro::ReplaceNewline(pos) => replace_newline(input, pos.clone()),
-            Macro::StrReplace(pos) => str_replace(input, pos.clone()),
-            Macro::ToCase(pos) => to_case(input, pos.clone()),
+            Macro::ReplaceNewline(pos) => replace_newline(input, *pos),
+            Macro::StrReplace(pos) => str_replace(input, *pos),
+            Macro::ToCase(pos) => to_case(input, *pos),
         }
     }
 }
