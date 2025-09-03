@@ -1,6 +1,6 @@
 [package]
 name = "place_macro_proc"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 license-file = "../LICENSE"
 description = "This crate contains the procedural macros for place_macro."
@@ -14,4 +14,4 @@ proc-macro = true
 
 [dependencies]
 proc-macro2 = "1.0.71"
-place_macro_core = { path = "../place_macro_core", version = "1.0.0" }
+place_macro_core = { path = "../place_macro_core", version = "1.1.0" }

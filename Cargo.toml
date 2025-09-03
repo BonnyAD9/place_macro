@@ -1,6 +1,6 @@
 [package]
 name = "place_macro"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 license-file = "LICENSE"
 description = "Macros you wish you had while you were writing your non-proc macro."
@@ -14,4 +14,4 @@ members = [
 ]
 
 [dependencies]
-place_macro_proc = { path = "place_macro_proc", version = "1.0.0" }
+place_macro_proc = { path = "place_macro_proc", version = "1.1.0" }

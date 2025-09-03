@@ -1,6 +1,6 @@
 # Changelog
 
-# future
+# v1.1.0
 - Fix `to_case` insude `place` macro.
 - Add `Ada_Case`.
 
