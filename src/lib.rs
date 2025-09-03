@@ -55,6 +55,7 @@
 //! - `__ToCase__`
 //! - `__to_case__`
 //! - `__TO_CASE__`
+//! - `__To_Case__`
 //!
 //! #### Example
 //! The following passes:
@@ -335,6 +336,7 @@ pub use place_macro_proc::str_replace;
 /// - `"ToCase"`
 /// - `"to_case"`
 /// - `"TO_CASE"`
+/// - `"To_Case"`
 ///
 /// # Examples
 /// ```

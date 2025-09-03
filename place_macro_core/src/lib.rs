@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use convert_case::{Case, Casing};
 use proc_macro2::{
     Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream,
@@ -287,6 +285,7 @@ fn get_case(spec: &str, i: &str) -> String {
         "ToCase" => i.to_case(Case::Pascal),
         "to_case" => i.to_case(Case::Snake),
         "TO_CASE" => i.to_case(Case::UpperSnake),
+        "To_Case" => i.to_case(Case::Ada),
         _ => panic!("Unknown case specifier: '{spec}'"),
     }
 }
@@ -318,6 +317,7 @@ fn token_concat(input: TokenStream) -> String {
                     litrs::Literal::String(v) => res += &v.into_value(),
                     litrs::Literal::Byte(v) => res += &v.to_string(),
                     litrs::Literal::ByteString(v) => res += &v.to_string(),
+                    litrs::Literal::CString(v) => res += &v.to_string(),
                 },
             }
         } else {
@@ -328,7 +328,7 @@ fn token_concat(input: TokenStream) -> String {
     res
 }
 
-fn get_str_lit<'a>(tt: TokenTree) -> Option<Cow<'a, str>> {
+fn get_str_lit(tt: TokenTree) -> Option<String> {
     match tt {
         TokenTree::Group(g) => {
             let mut i = g.stream().into_iter();
@@ -433,7 +433,10 @@ pub fn place(input: TokenStream) -> TokenStream {
             }
             Some(t) => return error_at(t.span(), "Expected '('"),
             None => {
-                return error_at(id.span(), "Expected '(' after builtin macro");
+                return error_at(
+                    id.span(),
+                    "Expected '(' after builtin macro",
+                );
             }
         };
 

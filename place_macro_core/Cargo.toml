@@ -8,6 +8,6 @@ repository = "https://github.com/BonnyAD9/place_macro/tree/master"
 readme = "../README.md"
 
 [dependencies]
-convert_case = "0.6.0"
-litrs = "0.4.1"
-proc-macro2 = "1.0.71"
+convert_case = "0.8.0"
+litrs = { version = "0.5.1", features = ["proc-macro2"]}
+proc-macro2 = "1.0.101"

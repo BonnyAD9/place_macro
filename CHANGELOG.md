@@ -2,6 +2,7 @@
 
 # future
 - Fix `to_case` insude `place` macro.
+- Add `Ada_Case`.
 
 # v1.0.0
 - Proper error handling
