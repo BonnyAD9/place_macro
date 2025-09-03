@@ -433,7 +433,7 @@ pub fn place(input: TokenStream) -> TokenStream {
             }
             Some(t) => return error_at(t.span(), "Expected '('"),
             None => {
-                return error_at(id.span(), "Expected '(' after builtin macro")
+                return error_at(id.span(), "Expected '(' after builtin macro");
             }
         };
 

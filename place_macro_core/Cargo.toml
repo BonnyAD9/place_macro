@@ -1,7 +1,7 @@
 [package]
 name = "place_macro_core"
 version = "1.0.0"
-edition = "2021"
+edition = "2024"
 license-file = "../LICENSE"
 description = "This crate contains implementation of procedural macros for place_macro."
 repository = "https://github.com/BonnyAD9/place_macro/tree/master"
