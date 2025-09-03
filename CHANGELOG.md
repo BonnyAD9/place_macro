@@ -1,5 +1,8 @@
 # Changelog
 
+# future
+- Fix `to_case` insude `place` macro.
+
 # v1.0.0
 - Proper error handling
 - More robust input for macros
