@@ -376,3 +376,11 @@ pub use place_macro_proc::to_case;
 /// assert_eq!(res, "123__string__4");
 /// ```
 pub use place_macro_proc::place;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test0() {
+        super::place!(let __to_case__(Hello) = 5;);
+    }
+}

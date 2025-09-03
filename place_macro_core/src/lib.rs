@@ -441,10 +441,10 @@ pub fn place(input: TokenStream) -> TokenStream {
             res.last_mut().expect("7").extend(g.stream())
         } else if matches!(m, Macro::ToCase(_)) {
             let mut s = TokenStream::new();
-            s.extend([TokenTree::Ident(Ident::new(
-                name.trim_matches('_'),
-                Span::call_site(),
-            ))]);
+            s.extend([
+                TokenTree::Literal(Literal::string(name.trim_matches('_'))),
+                TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+            ]);
             s.extend(g.stream().into_iter());
             input.push((s.into_iter(), Some(m), g.delimiter()));
             res.push(TokenStream::new());
